@@ -1,0 +1,4 @@
+Application name  XMusiX
+API key 6c66aab0827367749820083f04136b79
+Shared secret 8bbf87d4c640199336740318a74ce007
+Registered to dsedchenko
