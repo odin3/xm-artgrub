@@ -10,7 +10,10 @@ class TestController extends Controller
 {
     public function Main() {
         $model = Model::Get('MusicData');
-        
-        var_dump($model->ifArtistExists('1'));
+
+        var_dump(
+            $model->createArtist('1', 'Test')
+        );
+        //var_dump($model->ifArtistExists('1'));
     }
 }
