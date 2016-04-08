@@ -54,7 +54,7 @@ class System
   {
     if(!file_exists(CONTROLLERS."$vClass.php")) throw new ControllerNotFoundException("Controller not found: '".CONTROLLERS."$vClass.php'", 1);
     require_once(CONTROLLERS."$vClass.php");
-    if(!class_exists($vClass.'Controller')) throw new ControllerClassNotFoundException("Class not found: '$vClass.Controller'", 1);
+    if(!class_exists($vClass.'Controller')) throw new ControllerClassNotFoundException("Class not found: '".$vClass."Controller'", 1);
     if(!method_exists($vClass.'Controller', $vFunc)) throw new ActivityNotFoundException("Activity '$vFunc' not found in Controller '$vClass'", 1);
     
     $vClass .= "Controller";

@@ -1,17 +1,19 @@
 <?php
 class MusicStorage extends Model {
-  private $TABLE  = 'XTracks1';
-  private $folder = 'arts';
-  private $fields = '`TAG`, `Artist1`, `Title`';
+  private $tb_tracks      = 'XTracks';
+  
+
+  private $folder         = 'arts';
+  private $fields         = '`TAG`, `Artist1`, `Title`';
 
 	public $db;
 	
   public function getItemsCount() {
-    return $this->db->count($this->TABLE);
+    return $this->db->count($this->tb_tracks);
   }
 
   public function getItems($limit=0, $offset=0) {
-    return $this->db->GetRows("SELECT `TAG`, `Artist1`, `Title` FROM $this->TABLE ORDER BY `TAG` DESC LIMIT $limit OFFSET $offset;");
+    return $this->db->GetRows("SELECT `TAG`, `Artist1`, `Title` FROM $this->tb_tracks ORDER BY `TAG` DESC LIMIT $limit OFFSET $offset;");
   }
 
   public function getGroupPath($track) {
@@ -20,7 +22,7 @@ class MusicStorage extends Model {
   }
 
   public function getTrackByProperty($param, $value) {
-    return $this->db->GetRow("SELECT $this->fields FROM $this->TABLE WHERE `$param` = '$value'");
+    return $this->db->GetRow("SELECT $this->fields FROM $this->tb_tracks WHERE `$param` = '$value'");
   }
 
   public function getTrackByTag($tag) {
@@ -28,11 +30,11 @@ class MusicStorage extends Model {
   }
 
   public function deleteItem($where) {
-    return $this->db->Delete($this->TABLE, $where);
+    return $this->db->Delete($this->tb_tracks, $where);
   }
 
   public function hasAlbumArt($tag, $hasArt=1) {
-    return $this->db->Update($this->TABLE, 
+    return $this->db->Update($this->tb_tracks, 
       array('HasArt' => $hasArt), 
       array('TAG' => $tag));
   }
