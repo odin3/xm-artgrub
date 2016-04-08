@@ -6,29 +6,71 @@ class LastFmProvider extends Model {
 
 
 
-  private function request($method, $args) {
+  private function request($method, $args = array() ) {
+
+    // Always request as JSON
+    $args['format'] = 'json';
+
+    // Request URL
     $requestURI = "$this->URL?method=$method&api_key=$this->APIKey";
 
     foreach($args as $key => $val) {
       $requestURI .= "&$key=".urlencode($val);
     }
 
-    return json_decode( file_get_contents($requestURI), true );
-    //return new SimpleXMLElement($requestURI, null, true);
+    $item = json_decode( file_get_contents($requestURI), true );
+    return (isset($item['error'])) ? array() : $item;
   }
 
-  public function getTrackInfo($artist, $trackName) {
+  public function getTrack($artist, $trackName) {
+    $artist     = strtolower($artist);
+    $trackName  = strtolower($trackName);
     return $this->request('track.getInfo', array(
         'artist'  => $artist,
-        'track'   => $trackName,
-        'format'  => 'json'
+        'track'   => $trackName
       ));
   }
 
-  public function getTrackAlbumArt($artist, $track) {
-    $artist = strtolower($artist);
-    $track = strtolower($track);
-    $data = $this->getTrackInfo($artist, $track);
+  public function getTrackTags($data) {
+      if(!isset($data['toptags']) || !isset($data['toptags']['tags']) ) return array();
+      $ar_tags = $data['toptags']['tags'];
+      $tags = array();
+
+      foreach($ar_tags as $tag) {
+        if(isset($tag['name'])) array_push($tags, $tag['name']);
+      }
+
+      return $tags;
+  }
+
+  public function extractTrackInfo($data) {
+    if(!isset($data['track'])) return array();
+
+    $result = array();
+    $track  = $data['track'];
+
+    $result['art']        = $this->getTrackAlbumArt($data);
+    $result['mbid']       = $track['mbid'];
+    $result['url']        = $track['url'];
+    $result['duration']   = $track['duration'];
+
+    if(isset($track['artist'])) {
+      $result['artist']   = $track['artist'];
+    }
+
+    if(isset($track['album'])) {
+      $result['album']   = $track['album'];
+    }
+
+    $result['tags']       = $this->getTrackTags($track);
+
+    return $result;
+
+
+  }
+
+
+  public function getTrackAlbumArt($data) {
 
     if(!isset($data['track'])) return array();
     
