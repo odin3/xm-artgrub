@@ -12,10 +12,9 @@ $(document).ready(function() {
       errorLog  = $('#errorsList'),
       failed    = 0,
       success   = 0,
+      warnings  = 0,
       curReq    = null;
 
-
-  console.log(total, offset);    
   function getPercentDone() {
     return parseFloat( (offset * 100) / total).toFixed(2);
   }
@@ -26,17 +25,28 @@ $(document).ready(function() {
     progress.html(done+'%').css('width', done+"%");
     $('#successed').html(success);
     $('#failed').html(failed);
+    $('#warnings').html(warnings);
   }
 
-  function panic(msg) {
+  function filtval(val) {
+      val = String(val);
+      return (val.length > 1) ? val : "0"+val;
+  }
+  function panic(msg, mark) {
+    if(typeof mark == 'undefined') mark = true;
     var currentdate = new Date(); 
-    var datetime =  currentdate.getDate() + "/"
-                    + (currentdate.getMonth()+1)  + "/" 
+    var datetime =  filtval(currentdate.getDate()) + "/"
+                    + filtval(currentdate.getMonth()+1)  + "/"
                     + currentdate.getFullYear() + " @ "  
-                    + currentdate.getHours() + ":"  
-                    + currentdate.getMinutes() + ":" 
-                    + currentdate.getSeconds();
-    errorLog.append('\r\n['+datetime+']   '+msg);                
+                    + filtval(currentdate.getHours()) + ":"
+                    + filtval(currentdate.getMinutes()) + ":"
+                    + filtval(currentdate.getSeconds());
+    var dmsg =   '\r\n['+datetime+']   '+msg;
+    if(mark) dmsg = '<span class="panic-error">'+dmsg+"</span>";
+    errorLog.append(dmsg);
+    setTimeout(function(){
+        errorLog.scrollTop(errorLog.prop('scrollHeight'));
+    },100);
   }  
 
   function showTaskBar(act) {
@@ -74,7 +84,6 @@ $(document).ready(function() {
       // finish
     } else {
       try {
-        console.log(offset);
         curReq = $.get('/get/main/&offset='+offset).done(function(r) {
           parseResponse(r);
           ping();
@@ -85,6 +94,7 @@ $(document).ready(function() {
           ping();
         });
       } catch(ex) {
+        console.error(ex);
         panic( String(ex) );
       }
     }
@@ -95,8 +105,11 @@ $(document).ready(function() {
     try {
       if(typeof r != 'object') r = JSON.parse(r);
       if(!r.success) {
-        failed++;
-        panic(r.response);
+        var mesg = r.response.message,
+            code = parseInt(r.response.code);
+        (code > 0) ? warnings++ : failed++;
+        var red = (code == 0);
+        panic(r.response.message, red);
       } else {
         success++;
       }
@@ -105,6 +118,7 @@ $(document).ready(function() {
 
 
     } catch(ex) {
+      console.error(ex);
       panic(ex);
     }
   }

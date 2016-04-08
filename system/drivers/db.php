@@ -104,6 +104,7 @@ class DataBase
      */
   public function Query($queryString) 
   {
+//    echo($queryString."<br />");
     $this->Connect();
     $result = $this->Connection->query($queryString);
     if(!$result){

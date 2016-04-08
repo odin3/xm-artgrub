@@ -7,10 +7,15 @@
   <!-- <link rel="stylesheet" href="/media/css/bootstrap-theme.min.css"> -->
   <script src="/media/js/jquery-2.2.2.min.js"></script>
   <script src='/media/js/script.js'></script>
+  <style>
+    .panic-error  {
+      color:tomato;
+    }
+  </style>
 </head>
 <body data-total="<?=$total?>" data-offset="<?=$offset?>">
   <div class="container">
-    <h2 class="page-header">ArtGrabber <small>Album art downloader for XMusiX</small> </h2>
+    <h2 class="page-header">AudiGrabber <small>Audio data downloader for XMusiX</small> </h2>
 
     <div class="alert alert-info start-up" id="startBar">
       <div class="row">
@@ -30,7 +35,8 @@
           <div class="col-sm-6">
             Processing <b id="currentOffset" class="get-done"><?=$offset?></b> of <b><?=$total?></b>;
             <div>
-               <b style="color: green;">Success: </b> <span id="successed">0</span>; <b style='color: tomato;'>Failed: </b> <span id="failed">0</span>
+               <b style="color: green;">Success: </b> <span id="successed">0</span>; <b style='color: orange;'>With warning: </b> <span id="warnings">0</span>
+              ; <b style='color: tomato;'>Failed: </b> <span id="failed">0</span>
             </div>
           </div>
           <div class="col-sm-6">

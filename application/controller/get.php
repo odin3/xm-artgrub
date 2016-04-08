@@ -1,7 +1,14 @@
 <?
+// No time limit
+set_time_limit(0);
+
+define("ERR_WARNING", 1);
+define("ERR_PANIC", 0);
+
 class GetController extends Controller {
   private $musicStorage;
   private $lastFm;
+  private $dataStorage;
 
   public function Main() {
 
@@ -24,33 +31,84 @@ class GetController extends Controller {
         $tag  = $item['TAG'];
 
         // If search result is empty
-        if(!count($item)) return AJAXResponse::error("[$tag] Item not found");
+        if(!count($item)) return AJAXResponse::error("[$tag:$offset] Item not found", ERR_PANIC);
 
 
+        $track = $this->lastFm->getTrack($item['Artist1'], $item['Title']);
 
-        if( $this->fetchImages($item) > 0 ) {
+        if( count($track) == 0 ) return AJAXResponse::error("[$tag:$offset] No information from Last.FM available");
+
+        // Get data and put into db
+        $this->saveMetaData($tag, $track);
+
+        // Download images
+        if( $this->fetchImages($item, $track) > 0 ) {
           $this->markAsDone($item);
-          return AJAXResponse::reply("[$tag] Success");
+          return AJAXResponse::reply("[$tag:$offset] Success");
         } else {
-          return AJAXResponse::error("[$tag] No Arts Available");
+          return AJAXResponse::error("[$tag:$offset] No Arts Available", ERR_WARNING);
         }
 
         
         
     } catch (Exception $ex) {
-      return AJAXResponse::error((string) $ex);
+      return AJAXResponse::error($_GET['offset'].((string) $ex) );
     }
   }
 
-  private function fetchImages($data) {
+
+  private function saveMetaData($tag, $data) {
+    $track = $this->lastFm->extractTrackInfo($data, $tag);
+
+    if(count($track) == 0) return false;
+
+    $mbid   = $track['mbid'];
+    $length = (isset($track['duration'])) ? $track['duration'] : 0;
+    $artist = $track['artist'];
+    $album  = $track['album'];
+    $tags   = $track['tags'];
+
+    
+    // Write artist
+    if (!$this->dataStorage->artistExists($artist['mbid']) ) {
+      $this->dataStorage->createArtist($artist['mbid'], $artist['name']);
+    }
+
+    // Write album
+    if( (count($track['album']) > 0) && isset($track['album']['mbid']) ) {
+      $album = $track['album'];
+
+      if (!$this->dataStorage->albumExists($album['mbid']) ) {
+        $hasArt = ( isset($album['image']) && (count($album['image']) > 0) );
+
+        $this->dataStorage->createAlbum($album['mbid'], $album['title'], $artist['mbid'], $hasArt);
+      }
+    }
+
+    // Write track
+    if(!$this->dataStorage->trackExists($mbid)) {
+      $albumId = (isset($album['mbid'])) ? $album['mbid'] : null;
+      $this->dataStorage->createTrack($tag, $mbid, $length, $artist['mbid'], $albumId);
+    }
+
+    // Write tags
+    foreach($tags as $tag) {
+      if(!$this->dataStorage->tagExists($mbid, $tag)) {
+        $this->dataStorage->createTag($mbid, $tag);
+      }
+    }
+
+  }
+
+  private function fetchImages($data, $lastFmData) {
 
     $grpPath  = $this->musicStorage->getGroupPath($data);
-    $arts     = $this->lastFm->getTrackAlbumArt($data['Artist1'], $data['Title']);
+    $arts     = $this->lastFm->getTrackAlbumArt($lastFmData);
 
     foreach($arts as $type => $url) {
       $this->downloadImage($type, $grpPath, $url);
     }
-    //var_dump($arts);
+
     return count($arts);
   }
 
@@ -60,8 +118,6 @@ class GetController extends Controller {
   }
 
   private function downloadImage($type, $location, $url, $ext='png') {
-    // No time limit
-    set_time_limit(0);
 
     // Create directory recursive
     if(!Dir::Exists($location)) Dir::Create($location, true);
@@ -123,6 +179,7 @@ class GetController extends Controller {
     // Get models
     $this->musicStorage = Model::Get('MusicStorage');
     $this->lastFm       = Model::Get('LastFmProvider');
+    $this->dataStorage  = Model::Get('MusicData');
 
   }
 

@@ -31,17 +31,23 @@ class MusicData extends Model
      * @param $mbid String Album's MBID
      * @return bool
      */
-    public function ifAlbumExists($mbid) {
+    public function albumExists($mbid) {
         return $this->ifMbIdExists($mbid, $this->tb_albums);
     }
 
     
-    public function ifArtistExists($mbid) {
+    public function artistExists($mbid) {
         return $this->ifMbIdExists($mbid, $this->tb_artists);
     }
 
-    public function ifTrackExists($mbid) {
+    public function trackExists($mbid) {
         return $this->ifMbIdExists($mbid, $this->tb_tracks);
+    }
+
+    public function tagExists($trackMBID, $tagName) {
+      return ( $this->db->Count($this->tb_tags,
+          '`trackId`',
+          "where `trackId` = '$trackMBID' and `tagName` = '$tagName'") > 0 );
     }
 
 
@@ -53,11 +59,12 @@ class MusicData extends Model
      * @param $artistId String MBID of Artist
      * @return DataBase
      */
-    public function createAlbum($mbid, $name, $artistId) {
+    public function createAlbum($mbid, $name, $artistId, $hasArt=0) {
         return $this->db->Insert( $this->tb_albums, array(
             'mbid'      => $mbid,
             'name'      => $name,
-            'artistId'  => $artistId
+            'artistId'  => $artistId,
+            'hasArt'    => $hasArt
         ) );
     }
 
@@ -85,14 +92,16 @@ class MusicData extends Model
      * @param $albumId  String Album's MBID
      * @return DataBase
      */
-    public function createTrack($tag, $mbid, $duration, $artistId, $albumId) {
-        return $this->db->Insert( $this->tb_tracks, array(
-            'tag'       => $tag,
-            'mbid'      => $mbid,
-            'duration'  => intval($duration),
-            'artist'    => $artistId,
-            'album'     => $albumId
-        ) );
+    public function createTrack($tag, $mbid, $duration, $artistId, $albumId=null) {
+        $data = array(
+          'tag'       => $tag,
+          'mbid'      => $mbid,
+          'duration'  => intval($duration),
+          'artist'    => $artistId
+        );
+
+      if($albumId != null) $data['album'] = $albumId;
+      return $this->db->Insert( $this->tb_tracks, $data);
     }
 
 
@@ -108,6 +117,13 @@ class MusicData extends Model
             'trackId'   => $trackMBID,
             'tagName'   => $tagName
         ) );
+    }
+
+    public function reset() {
+      $this->db->Query('DELETE FROM iTracks;');
+      $this->db->Query('DELETE FROM iTags;');
+      $this->db->Query('DELETE FROM iArtists;');
+      $this->db->Query('DELETE FROM iAlbums;');
     }
 
 

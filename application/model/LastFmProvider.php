@@ -32,8 +32,8 @@ class LastFmProvider extends Model {
   }
 
   public function getTrackTags($data) {
-      if(!isset($data['toptags']) || !isset($data['toptags']['tags']) ) return array();
-      $ar_tags = $data['toptags']['tags'];
+      if(!isset($data['toptags']) || !isset($data['toptags']['tag']) ) return array();
+      $ar_tags = $data['toptags']['tag'];
       $tags = array();
 
       foreach($ar_tags as $tag) {
@@ -43,28 +43,35 @@ class LastFmProvider extends Model {
       return $tags;
   }
 
-  public function extractTrackInfo($data) {
+  public function extractTrackInfo($data, $tag) {
     if(!isset($data['track'])) return array();
 
     $result = array();
     $track  = $data['track'];
 
     $result['art']        = $this->getTrackAlbumArt($data);
-    $result['mbid']       = $track['mbid'];
+
+    $result['mbid']       = (isset($track['mbid'])) ? $track['mbid'] : $tag;
+
     $result['url']        = $track['url'];
     $result['duration']   = $track['duration'];
 
+
     if(isset($track['artist'])) {
       $result['artist']   = $track['artist'];
+      if(!isset($result['artist']['mbid'])) $result['artist']['mbid'] = $tag;
     }
 
     if(isset($track['album'])) {
       $result['album']   = $track['album'];
+    } else {
+      $result['album'] = array();
     }
 
     $result['tags']       = $this->getTrackTags($track);
 
     return $result;
+    
 
 
   }

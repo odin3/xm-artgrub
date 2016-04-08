@@ -20,6 +20,8 @@ class MainController extends Controller
 
   public function reset() {
     Session::set('offset', 0);
+    Model::Get('MusicData')->reset();
+    system("rm -rf ".escapeshellarg(APPDATA.'arts'));
     header('Location: /');
     return $this->Execute();
   }
