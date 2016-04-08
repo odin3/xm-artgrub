@@ -240,8 +240,10 @@ class DataBase
             try {
                 foreach($data as $col => $val) {
                     if ($count++ != 0) $fields .= $separator;
-                    $col = mysqli_real_escape_string($this->Connection,$col);
-                    $val = mysqli_real_escape_string($this->Connection,$val);
+                    //$col = mysqli_real_escape_string($this->Connection,$col);
+                    //$val = mysqli_real_escape_string($this->Connection,$val);
+                    $col = addslashes($col);
+                    $val = addslashes($val);
                     $fields .= "`$col` = '$val'";
                 }
             }catch(Exception $ex) {
